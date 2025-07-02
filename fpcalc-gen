@@ -1,0 +1,32 @@
+#!/bin/bash
+input_dir="songs"
+output_dir="fingerprints"
+sample_size=500
+
+process_file() {
+  local file="$1"
+  local rel_path="${file#$input_dir/}"
+  local output_file="$output_dir/$rel_path.fpcalc"
+  if [[ -f "$output_file" ]]; then
+    echo "Skipped (already exists): $output_file"
+    return;
+  fi
+  mkdir -p "$(dirname "$output_file")"
+  fpcalc -raw -length "$sample_size" "$file" > "$output_file"
+  echo "Processed: $file -> $output_file"
+}
+
+export -f process_file
+export input_dir output_dir sample_size
+
+file_list=$(find "$input_dir" -type f -name '*.mp3')
+
+if command -v xargs >/dev/null; then
+  echo "✅ xargs found — running in parallel"
+  echo "$file_list" | xargs -d '\n' -n 1 -P "$(nproc)" bash -c 'process_file "$0"'
+else
+  echo "⚠️ xargs not found — running serially"
+  echo "file_list" | while read -r file; do
+    process_file "$file"
+  done
+fi
