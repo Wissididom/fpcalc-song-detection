@@ -1,0 +1,46 @@
+---
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    name: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare Python (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip3 install pip --upgrade
+          pip3 install wheel
+          pip3 install -r requirements.txt
+          pip3 install pyinstaller
+
+      - name: Build (Ubuntu)
+        run: |
+          source venv/bin/activate
+          pyinstaller main.py
+          cd dist/main
+          chmod +x main
+          mv main fpcalc-song-detection
+          cd ../..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fpcalc-song-detection-${{ matrix.os }}.zip
+          path: dist/main/
