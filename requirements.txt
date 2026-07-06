@@ -1,2 +1,2 @@
 correlation==1.0.0
-numpy==2.5.0
+numpy==2.5.1
